@@ -70,6 +70,10 @@ public class ImageHistogram extends Frame implements ActionListener {
 	}
 	// Action listener for button click events
 	public void actionPerformed(ActionEvent e) {
+                int[] redMinMax = {255, 0};
+                int[] blueMinMax = {255, 0};
+                int[] greenMinMax = {255, 0};
+                int max = 0;
 		// example -- compute the average color for the image
 		if ( ((Button)e.getSource()).getLabel().equals("Display Histogram") ) {
 			int[] red = new int[256];
@@ -78,15 +82,12 @@ public class ImageHistogram extends Frame implements ActionListener {
 			for ( int y=0 ; y<height ; y++ )
 				for ( int x=0 ; x<width ; x++ ) {
 					Color clr = new Color(input.getRGB(x, y));
-                                        red[clr.getRed() - 1] += 1;
-                                        blue[clr.getBlue() - 1] += 1;
-                                        green[clr.getGreen() - 1] += 1;
+                                        red[clr.getRed()] += 1;
+                                        blue[clr.getBlue()] += 1;
+                                        green[clr.getGreen()] += 1;
 				}
 			plot.setMeanColor(red, green, blue);
 		} else if ( ((Button)e.getSource()).getLabel().equals("Histogram Stretch") ) {
-                        int[] redMinMax = {255, 0};
-                        int[] blueMinMax = {255, 0};
-                        int[] greenMinMax = {255, 0};
 			int[] red = new int[256];
                         int[] blue = new int[256];
                         int[] green = new int[256];
@@ -100,7 +101,7 @@ public class ImageHistogram extends Frame implements ActionListener {
                                         if (currentRed > redMinMax[1]) {
                                             redMinMax[1] = currentRed;
                                         }
-                                        red[currentRed - 1] += 1;
+                                        red[currentRed] += 1;
                                         
                                         int currentBlue = clr.getBlue();
                                         if (currentBlue < blueMinMax[0]) {
@@ -109,7 +110,7 @@ public class ImageHistogram extends Frame implements ActionListener {
                                         if (currentBlue > blueMinMax[1]) {
                                             blueMinMax[1] = currentBlue;
                                         }
-                                        blue[currentBlue - 1] += 1;
+                                        blue[currentBlue] += 1;
                                         
                                         int currentGreen = clr.getGreen();
                                         if (currentGreen < greenMinMax[0]) {
@@ -118,7 +119,7 @@ public class ImageHistogram extends Frame implements ActionListener {
                                         if (currentGreen > greenMinMax[1]) {
                                             greenMinMax[1] = currentGreen;
                                         }
-                                        green[currentGreen - 1] += 1;
+                                        green[currentGreen] += 1;
 				};
 			plot.setMeanColor(this.stretchTo256(Arrays.copyOfRange(red, redMinMax[0], redMinMax[1])), this.stretchTo256(Arrays.copyOfRange(green, greenMinMax[0], greenMinMax[1])), this.stretchTo256(Arrays.copyOfRange(blue, blueMinMax[0], blueMinMax[1])));
 		}
@@ -129,7 +130,6 @@ public class ImageHistogram extends Frame implements ActionListener {
                 newArray[0] = toStretch[0];
                 newArray[255] = toStretch[toStretch.length - 1];
                 for (int i = 1; i < 255; i++) {
-                    System.out.println(Math.round((i / 256.0) * toStretch.length));
                     newArray[i] = toStretch[(int) ((i / 256.0) * toStretch.length)];
                 }
                 return newArray;
@@ -149,6 +149,16 @@ class PlotCanvas extends Canvas {
         LineSegment[] blue = new LineSegment[255];
         
 	boolean showMean = false;
+        
+        public int maxOfArr(int[] arr) {
+            int max = 0;
+            for (int i = 0; i < arr.length; i++) {
+                if (arr[i] > max) {
+                    max = arr[i];
+                }
+            }
+            return max;
+        }
 
 	public PlotCanvas() {
 		x_axis = new LineSegment(Color.BLACK, -10, 0, 256+10, 0);
@@ -156,10 +166,13 @@ class PlotCanvas extends Canvas {
 	}
 	// set mean image color for plot
 	public void setMeanColor(int[] redArr, int[] greenArr, int[] blueArr) {
+                int max = Math.max(this.maxOfArr(redArr), Math.max(this.maxOfArr(blueArr), this.maxOfArr(greenArr)));
+                System.out.println(max);
                 for (int i = 1; i < 256; i++) {
-                        red[i-1] = new LineSegment(Color.RED, i - 1, redArr[i - 1] / 3, i, redArr[i] / 3);
-                        blue[i-1] = new LineSegment(Color.BLUE, i - 1, blueArr[i - 1] / 3, i, blueArr[i] / 3);
-                        green[i-1] = new LineSegment(Color.GREEN, i - 1, greenArr[i - 1] / 3, i, greenArr[i] / 3);
+                        System.out.println((int)(600 * (redArr[i - 1] / (float)(max))));
+                        red[i-1] = new LineSegment(Color.RED, i - 1, (int)(200 * (redArr[i - 1] / (float)(max))), i, (int)(200 * (redArr[i] / (float)(max))));
+                        blue[i-1] = new LineSegment(Color.BLUE, i - 1, (int)(200 * (blueArr[i - 1] / (float)(max))), i, (int)(200 * (blueArr[i] / (float)(max))));
+                        green[i-1] = new LineSegment(Color.GREEN, i - 1, (int)(200 * (greenArr[i - 1] / (float)(max))), i, (int)(200 * (greenArr[i] / (float)(max))));
                         showMean = true;
                 }
 		repaint();
